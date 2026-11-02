@@ -31,6 +31,10 @@ pub fn session_routes() -> Router<AppState> {
         )
         .route("/{session_id}/calls/accept", post(handlers::accept_call))
         .route(
+            "/{session_id}/calls/{call_id}/media/ws",
+            get(handlers::attach_media_ws),
+        )
+        .route(
             "/{session_id}/calls/terminate",
             post(handlers::terminate_call),
         )

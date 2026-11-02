@@ -1091,8 +1091,18 @@ pub(super) fn event_to_json(
             None => serde_json::json!({}),
         },
         Event::Receipt(receipt) => {
+            // `receipt` (the Debug dump) is kept for existing consumers; the
+            // structured fields let a consumer map a receipt back to the
+            // messages it acknowledges without parsing Rust Debug output.
             serde_json::json!({
                 "receipt": format!("{:?}", receipt),
+                "message_ids": receipt.message_ids.iter().map(|id| id.to_string()).collect::<Vec<_>>(),
+                "type": format!("{:?}", receipt.r#type),
+                "chat": receipt.source.chat.to_string(),
+                "sender": receipt.source.sender.to_string(),
+                "is_from_me": receipt.source.is_from_me,
+                "timestamp": receipt.timestamp.timestamp(),
+                "offline": receipt.offline,
             })
         }
         Event::Presence(presence) => {

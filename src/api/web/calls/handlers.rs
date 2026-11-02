@@ -1271,6 +1271,106 @@ async fn drive_media_socket(
     Ok(())
 }
 
+/// Attach a bidirectional audio WebSocket to a call that is ALREADY live —
+/// typically an incoming call answered with `POST /calls/accept` (no `text`
+/// or `audio_url`), whose audio otherwise runs into channels nobody reads.
+///
+/// Wire format is the same as `kind=audio` on `/calls/media/ws`: a JSON
+/// `call_attached` text frame first, then raw `pcm_s16le` mono 16 kHz in both
+/// directions. Inbound bytes are regrouped into the 960-sample frames the
+/// call engine requires (any other size is silently dropped by it); the
+/// client is still responsible for pacing them in real time. Closing the
+/// socket hangs the call up.
+pub async fn attach_media_ws(
+    State(state): State<AppState>,
+    Path((session_id, call_id)): Path<(String, String)>,
+    ws: WebSocketUpgrade,
+) -> Result<AxumResponse, ApiError> {
+    let _ = get_client(&state, &session_id)?;
+    let (mic_tx, spk_rx) = state
+        .call_audio_channels()
+        .get(&call_id)
+        .map(|a| (a.mic_tx.clone(), a.spk_rx.clone()))
+        .ok_or_else(|| ApiError::BadRequest("call_id has no live audio".to_string()))?;
+    let handle = state
+        .active_calls()
+        .get(&call_id)
+        .map(|h| h.value().clone())
+        .ok_or_else(|| ApiError::BadRequest("call_id is not an active call".to_string()))?;
+    Ok(ws.on_upgrade(move |socket| async move {
+        bridge_attached_call(state, session_id, call_id, handle, mic_tx, spk_rx, socket).await;
+    }))
+}
+
+async fn bridge_attached_call(
+    state: AppState,
+    session_id: String,
+    call_id: String,
+    handle: Arc<whatsapp_rust::voip::CallHandle>,
+    mic_tx: async_channel::Sender<Vec<i16>>,
+    spk_rx: async_channel::Receiver<Vec<i16>>,
+    socket: WebSocket,
+) {
+    let (mut sink, mut stream) = socket.split();
+    // Whatever the peer said before the socket attached is stale by now.
+    while spk_rx.try_recv().is_ok() {}
+    let meta = serde_json::json!({
+        "type": "call_attached",
+        "call_id": call_id,
+        "session_id": session_id,
+        "sample_rate": whatsapp_rust::voip::audio::WA_SAMPLE_RATE,
+        "frame_samples": whatsapp_rust::voip::audio::WA_FRAME_SAMPLES,
+        "encoding": "pcm_s16le_mono_16khz",
+    });
+    let _ = sink.send(WsMessage::Text(meta.to_string().into())).await;
+
+    let mut peer_task = tokio::spawn(async move {
+        while let Ok(pcm) = spk_rx.recv().await {
+            let mut bytes = Vec::with_capacity(pcm.len() * 2);
+            for s in &pcm {
+                bytes.extend_from_slice(&s.to_le_bytes());
+            }
+            if sink.send(WsMessage::Binary(bytes.into())).await.is_err() {
+                break;
+            }
+        }
+        let _ = sink.close().await;
+    });
+
+    let frame = whatsapp_rust::voip::audio::WA_FRAME_SAMPLES as usize;
+    let inbound = async {
+        let mut pending: Vec<i16> = Vec::with_capacity(frame * 2);
+        while let Some(msg) = stream.next().await {
+            match msg {
+                Ok(WsMessage::Binary(bytes)) => {
+                    for chunk in bytes.chunks_exact(2) {
+                        pending.push(i16::from_le_bytes([chunk[0], chunk[1]]));
+                    }
+                    while pending.len() >= frame {
+                        let out: Vec<i16> = pending.drain(..frame).collect();
+                        if mic_tx.send(out).await.is_err() {
+                            return;
+                        }
+                    }
+                }
+                Ok(WsMessage::Close(_)) | Err(_) => return,
+                _ => {}
+            }
+        }
+    };
+
+    tokio::select! {
+        _ = inbound => {}
+        _ = &mut peer_task => {}
+        _ = handle.wait_ended() => {}
+    }
+
+    peer_task.abort();
+    handle.terminate().await;
+    state.active_calls().remove(&call_id);
+    state.call_audio_channels().remove(&call_id);
+}
+
 /// Preview a TTS voice without placing a call — synthesize `text` with
 /// `voice` and return the MP3 that Edge-TTS produced, before the ffmpeg
 /// resample step. Cheap way for a caller to audition voices in the
