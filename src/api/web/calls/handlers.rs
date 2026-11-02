@@ -1324,13 +1324,42 @@ async fn bridge_attached_call(
     });
     let _ = sink.send(WsMessage::Text(meta.to_string().into())).await;
 
-    let mut peer_task = tokio::spawn(async move {
-        while let Ok(pcm) = spk_rx.recv().await {
-            let mut bytes = Vec::with_capacity(pcm.len() * 2);
-            for s in &pcm {
-                bytes.extend_from_slice(&s.to_le_bytes());
+    // The engine delivers (silent) peer frames while an outgoing call is
+    // still ringing, so audio alone cannot tell "answered": forward the
+    // engine's `MediaConnected` as a `{"type":"media_connected"}` text frame.
+    // An incoming call answered before the socket attached may already be
+    // past it — its client should not wait for one.
+    let (ctl_tx, ctl_rx) = async_channel::unbounded::<String>();
+    if let Some(mut events) = handle.take_events() {
+        let call_id_events = call_id.clone();
+        tokio::spawn(async move {
+            while let Ok(ev) = events.recv().await {
+                if matches!(ev, whatsapp_rust::voip::CallEvent::MediaConnected) {
+                    let _ = ctl_tx.send(r#"{"type":"media_connected"}"#.to_string()).await;
+                }
+                if !matches!(ev, whatsapp_rust::voip::CallEvent::RtcpReceived { .. }) {
+                    tracing::info!(target: "waxum::call_audio", call_id = %call_id_events, "call event: {:?}", ev);
+                }
             }
-            if sink.send(WsMessage::Binary(bytes.into())).await.is_err() {
+        });
+    }
+
+    let mut peer_task = tokio::spawn(async move {
+        loop {
+            let out = tokio::select! {
+                pcm = spk_rx.recv() => match pcm {
+                    Ok(pcm) => {
+                        let mut bytes = Vec::with_capacity(pcm.len() * 2);
+                        for s in &pcm {
+                            bytes.extend_from_slice(&s.to_le_bytes());
+                        }
+                        WsMessage::Binary(bytes.into())
+                    }
+                    Err(_) => break,
+                },
+                Ok(text) = ctl_rx.recv() => WsMessage::Text(text.into()),
+            };
+            if sink.send(out).await.is_err() {
                 break;
             }
         }
