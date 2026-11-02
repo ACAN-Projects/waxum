@@ -82,6 +82,9 @@ pub enum WebhookEvent {
     /// A call-history record synced from the primary device
     /// (upstream `Event::CallLogSync`).
     CallLogSync,
+    /// An incoming call stanza (offer, accept, terminate...): what an
+    /// answering service needs to pick the call up by `call_id`.
+    IncomingCall,
 
     /// A server-side stream error stanza (e.g. a 429 rate limit), surfaced
     /// as upstream `Event::StreamError`.
@@ -128,6 +131,7 @@ impl WebhookEvent {
             WebhookEvent::BlastProgress => event == "blast_progress",
             WebhookEvent::BlastCompleted => event == "blast_completed",
             WebhookEvent::CallLogSync => event == "call_log_sync",
+            WebhookEvent::IncomingCall => event == "incoming_call",
             WebhookEvent::StreamError => event == "stream_error",
             WebhookEvent::EncDecryptFailed => event == "enc_decrypt_failed",
         }
@@ -166,6 +170,7 @@ impl WebhookEvent {
             WebhookEvent::BlastProgress => "blast_progress",
             WebhookEvent::BlastCompleted => "blast_completed",
             WebhookEvent::CallLogSync => "call_log_sync",
+            WebhookEvent::IncomingCall => "incoming_call",
             WebhookEvent::StreamError => "stream_error",
             WebhookEvent::EncDecryptFailed => "enc_decrypt_failed",
         }
@@ -207,6 +212,7 @@ impl WebhookEvent {
             "blast_progress" => Some(WebhookEvent::BlastProgress),
             "blast_completed" => Some(WebhookEvent::BlastCompleted),
             "call_log_sync" => Some(WebhookEvent::CallLogSync),
+            "incoming_call" => Some(WebhookEvent::IncomingCall),
             "stream_error" => Some(WebhookEvent::StreamError),
             "enc_decrypt_failed" => Some(WebhookEvent::EncDecryptFailed),
             _ => None,
