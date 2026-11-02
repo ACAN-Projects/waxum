@@ -484,7 +484,14 @@ async fn async_main(worker_threads: usize, blocking_threads: usize) -> Result<()
         .unwrap_or_else(|_| "3451".to_string())
         .parse()
         .unwrap_or(3451);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    // `WA_RS_HOST` (documented above) was never read: the listener always
+    // bound every interface. A gateway whose token opens every session should
+    // be able to stay on loopback behind its consumer.
+    let host: std::net::IpAddr = std::env::var("WA_RS_HOST")
+        .ok()
+        .and_then(|h| h.parse().ok())
+        .unwrap_or(std::net::IpAddr::from([0, 0, 0, 0]));
+    let addr = SocketAddr::new(host, port);
     println!("\x1b[32m  Server listening on:\x1b[0m");
     println!(
         "    \x1b[90m→\x1b[0m API:       \x1b[94mhttp://{}/api/v1\x1b[0m",
