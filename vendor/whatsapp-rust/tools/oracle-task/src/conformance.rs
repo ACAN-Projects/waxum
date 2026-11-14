@@ -1,0 +1,76 @@
+use anyhow::Result;
+use std::path::Path;
+
+pub fn run(root: &Path, slow: bool) -> Result<()> {
+    let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+    super::derive_mlow::fetch(root, None)?;
+    xtask_support::run(
+        std::process::Command::new(&cargo)
+            .args(["run", "-p", "whatspec-codegen", "--", "--check"])
+            .current_dir(root),
+    )?;
+    xtask_support::run(
+        std::process::Command::new(&cargo)
+            .args([
+                "test",
+                "--release",
+                "--locked",
+                "-p",
+                "oracle-core",
+                "--lib",
+                "--tests",
+                "--",
+                "--nocapture",
+            ])
+            .current_dir(root),
+    )?;
+    super::mlow::run(
+        root,
+        super::mlow::Task::Regenerate {
+            out: None,
+            from_derived: None,
+            check: true,
+        },
+    )?;
+    // One libtest invocation selects the same union of gates without a
+    // second Cargo/build-script pass over the large generated dependencies.
+    xtask_support::run(
+        std::process::Command::new(&cargo)
+            .args([
+                "test",
+                "--locked",
+                "-p",
+                "wacore",
+                "--features",
+                "voip-mlow",
+                "--lib",
+                "--",
+                "voip::",
+                "iq::",
+            ])
+            .current_dir(root),
+    )?;
+    if slow {
+        xtask_support::run(
+            std::process::Command::new(&cargo)
+                .args([
+                    "nextest",
+                    "run",
+                    "--release",
+                    "--locked",
+                    "-p",
+                    "oracle-core",
+                    "--test",
+                    "signaling",
+                    "--test",
+                    "video_offer",
+                    "--profile=oracle",
+                    "--run-ignored=only",
+                    "--test-threads=1",
+                ])
+                .current_dir(root),
+        )?;
+    }
+    println!("VoIP conformance gates passed");
+    Ok(())
+}

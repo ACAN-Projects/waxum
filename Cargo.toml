@@ -142,3 +142,14 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+
+# ACAN 13/11/2026: whatsapp-rust 9b9fdb7 + upstream #1904 (sem <bot biz_bot> em
+# botão de DM; desde ~10/11 o WhatsApp descartava a interativa em 1:1).
+[patch."https://github.com/oxidezap/whatsapp-rust"]
+whatsapp-rust = { path = "vendor/whatsapp-rust" }
+wacore = { path = "vendor/whatsapp-rust/wacore" }
+wacore-binary = { path = "vendor/whatsapp-rust/wacore/binary" }
+waproto = { path = "vendor/whatsapp-rust/waproto" }
+whatsapp-rust-sqlite-storage = { path = "vendor/whatsapp-rust/storages/sqlite-storage" }
+whatsapp-rust-tokio-transport = { path = "vendor/whatsapp-rust/transports/tokio-transport" }
+whatsapp-rust-ureq-http-client = { path = "vendor/whatsapp-rust/http_clients/ureq-client" }

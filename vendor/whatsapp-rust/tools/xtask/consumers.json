@@ -1,0 +1,677 @@
+[
+  {
+    "manifest": "tests/api-consumer/Cargo.toml",
+    "locked": true,
+    "commands": [
+      {
+        "lanes": ["wasm"],
+        "mode": "test",
+        "features": ["runtime-execution"],
+        "test": "local_runtime",
+        "wasm_test": true
+      },
+      {
+        "lanes": ["wasm"],
+        "mode": "test",
+        "features": ["wasm-execution"],
+        "test": "durability_probe",
+        "wasm_test": true
+      },
+      {
+        "lanes": ["wasm"],
+        "mode": "test",
+        "features": ["wasm-execution"],
+        "test": "sqlite_timer",
+        "wasm_test": true
+      },
+      {
+        "lanes": ["native", "msrv"],
+        "mode": "test",
+        "features": ["native-default", "contracts"],
+        "lib": true
+      },
+      {
+        "lanes": ["native", "msrv"],
+        "mode": "test",
+        "features": ["event-fixtures"],
+        "test": "event_delivery"
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "core",
+          "contracts"
+        ]
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "sdk",
+          "core",
+          "contracts"
+        ]
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "native",
+          "contracts"
+        ]
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "plugins"
+        ],
+        "lib": true
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "voip-control",
+          "contracts"
+        ]
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "voip-runtime"
+        ],
+        "lib": true
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "voip-mlow"
+        ],
+        "lib": true
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "sdk",
+          "requests",
+          "contracts"
+        ]
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "sqlite"
+        ],
+        "bin": "sqlite"
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "check",
+        "features": [
+          "core",
+          "js"
+        ]
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "build",
+        "features": [
+          "sdk"
+        ],
+        "release": true
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "build",
+        "features": [
+          "sdk",
+          "requests"
+        ],
+        "release": true
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "build",
+        "features": [
+          "plugins"
+        ],
+        "release": true
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "build",
+        "features": [
+          "voip-control"
+        ],
+        "release": true
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "build",
+        "features": [
+          "voip-runtime"
+        ],
+        "release": true
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "build",
+        "features": [
+          "voip-mlow"
+        ],
+        "release": true
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "build",
+        "features": [
+          "sqlite"
+        ],
+        "release": true
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-image-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "ImageOptions"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-video-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "VideoOptions"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-document-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "DocumentOptions"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-audio-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "AudioOptions"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-catalog-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "CatalogOptions"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-collection-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "CollectionOptions"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-cache-config-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "CacheConfig"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-cache-entry-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "CacheEntryConfig"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "old-cache-stores-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "CacheStores"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "exhaustive-product-availability"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0004",
+          "contains": [
+            "non-exhaustive",
+            "ProductAvailability"
+          ],
+          "source": "src/media_cache/negative.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "lib": true,
+        "features": [
+          "sdk",
+          "old-message-id-string"
+        ],
+        "expect_failure": {
+          "error_code": "E0308",
+          "contains": [
+            "expected `MessageId`",
+            "found `String`"
+          ],
+          "source": "src/status/mod.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "lib": true,
+        "features": [
+          "sdk",
+          "old-revoke-string"
+        ],
+        "expect_failure": {
+          "error_code": "E0308",
+          "contains": [
+            "expected `MessageId`",
+            "found `&str`"
+          ],
+          "source": "src/status/mod.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "lib": true,
+        "features": [
+          "sdk",
+          "wrong-message-id-domain"
+        ],
+        "expect_failure": {
+          "error_code": "E0308",
+          "contains": [
+            "expected `MessageId`",
+            "found `StanzaId`"
+          ],
+          "source": "src/status/mod.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "lib": true,
+        "features": [
+          "sdk",
+          "wrong-stanza-id-domain"
+        ],
+        "expect_failure": {
+          "error_code": "E0308",
+          "contains": [
+            "expected `StanzaId`",
+            "found `MessageId`"
+          ],
+          "source": "src/status/mod.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "lib": true,
+        "features": [
+          "sdk",
+          "old-options-literal"
+        ],
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "StatusSendOptions"
+          ],
+          "source": "src/status/mod.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "removed-video-state"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "contains": [
+            "VideoStateChanged",
+            "CallEvent"
+          ],
+          "source": "src/peer_video/negative.rs",
+          "error_code": "E0599"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "proto-owned-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "Message"
+          ],
+          "source": "src/protobuf_contract.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "proto-view-literal"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0639",
+          "contains": [
+            "non-exhaustive",
+            "MessageView"
+          ],
+          "source": "src/protobuf_contract.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "proto-exhaustive-enum"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0004",
+          "contains": [
+            "non-exhaustive",
+            "ADVEncryptionType"
+          ],
+          "source": "src/protobuf_contract.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "proto-exhaustive-oneof"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0004",
+          "contains": [
+            "non-exhaustive",
+            "Operation"
+          ],
+          "source": "src/protobuf_contract.rs"
+        }
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "check",
+        "features": [
+          "proto-exhaustive-view-oneof"
+        ],
+        "lib": true,
+        "expect_failure": {
+          "error_code": "E0004",
+          "contains": [
+            "non-exhaustive",
+            "OperationView"
+          ],
+          "source": "src/protobuf_contract.rs"
+        }
+      }
+    ]
+  },
+  {
+    "manifest": "tests/sqlite-interop/Cargo.toml",
+    "locked": false,
+    "commands": [
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "bundled"
+        ],
+        "test": "interop"
+      },
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "features": [
+          "sqlcipher"
+        ],
+        "test": "interop"
+      }
+    ]
+  },
+  {
+    "manifest": "tests/sqlite-sdk-browser/Cargo.toml",
+    "locked": false,
+    "commands": [
+      {
+        "lanes": [
+          "native",
+          "msrv"
+        ],
+        "mode": "test",
+        "test": "browser"
+      },
+      {
+        "lanes": [
+          "wasm"
+        ],
+        "mode": "test",
+        "test": "browser",
+        "wasm_test": true
+      }
+    ]
+  }
+]
