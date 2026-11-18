@@ -556,6 +556,7 @@ pub(super) fn message_event_data(
     let quoted_message_id = quoted.as_ref().map(|(id, _)| id.clone());
     let quoted_sender_jid = quoted.and_then(|(_, participant)| participant);
     let selection = extract_interactive_selection(msg);
+    let reaction = extract_reaction_target(msg);
     let native_flow = selection
         .as_ref()
         .filter(|s| s.flow_name.is_some() || s.flow_params.is_some())
@@ -583,6 +584,7 @@ pub(super) fn message_event_data(
         "selected_id": selection.as_ref().and_then(|s| s.id.clone()),
         "selected_text": selection.as_ref().and_then(|s| s.text.clone()),
         "native_flow": native_flow,
+        "reaction": reaction,
         "is_group": info.source.chat.to_string().ends_with("@g.us"),
         "participant": info.source.sender.to_string(),
     })
@@ -824,6 +826,24 @@ pub(crate) fn extract_interactive_selection(
         });
     }
     None
+}
+
+/// The message a reaction points at: `message_id` plus the key's chat,
+/// sender and direction, so consumers can act on the reacted-to message.
+/// `null` for anything that is not a reaction.
+pub(crate) fn extract_reaction_target(msg: &waproto::whatsapp::Message) -> serde_json::Value {
+    let msg = msg.get_base_message();
+    let Some(reaction) = msg.reaction_message.as_option() else {
+        return serde_json::Value::Null;
+    };
+    let key = reaction.key.as_option();
+    serde_json::json!({
+        "message_id": key.and_then(|k| k.id.clone()),
+        "chat": key.and_then(|k| k.remote_jid.clone()),
+        "from_me": key.and_then(|k| k.from_me),
+        "participant": key.and_then(|k| k.participant.clone()),
+        "emoji": reaction.text.clone(),
+    })
 }
 
 /// Extracts the WhatsApp reply/quote linkage (`ContextInfo.stanzaId` +
@@ -1380,6 +1400,37 @@ mod tests {
                 },
                 ..Default::default()
             }
+        }
+
+        #[test]
+        fn reaction_reports_the_reacted_message() {
+            let msg = nx!(Message {
+                reaction_message: MessageField::some(nx!(wm::ReactionMessage {
+                    key: Some(nx!(waproto::whatsapp::MessageKey {
+                        remote_jid: Some("628111@s.whatsapp.net".to_string()),
+                        id: Some("3EB0A1B2C3D4E5F6".to_string()),
+                        from_me: Some(false),
+                        ..Default::default()
+                    }))
+                    .into(),
+                    text: Some("👍".to_string()),
+                    ..Default::default()
+                })),
+                ..Default::default()
+            });
+            let data = message_event_data(&msg, &info(), None, None);
+            assert_eq!(data["message_type"], "reaction");
+            assert_eq!(data["reaction"]["message_id"], "3EB0A1B2C3D4E5F6");
+            assert_eq!(data["reaction"]["chat"], "628111@s.whatsapp.net");
+            assert_eq!(data["reaction"]["from_me"], false);
+            assert_eq!(data["reaction"]["emoji"], "👍");
+        }
+
+        #[test]
+        fn non_reaction_has_null_reaction() {
+            let msg = quick_reply_tap();
+            let data = message_event_data(&msg, &info(), None, None);
+            assert_eq!(data["reaction"], serde_json::Value::Null);
         }
 
         #[test]
