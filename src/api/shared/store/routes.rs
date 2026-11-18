@@ -18,6 +18,10 @@ pub fn session_routes() -> Router<AppState> {
             get(handlers::message),
         )
         .route(
+            "/{session_id}/store/chats/{jid}/messages/{id}/media",
+            get(handlers::message_media),
+        )
+        .route(
             "/{session_id}/store/chats/{jid}/messages/{id}/reactions",
             get(handlers::reactions),
         )

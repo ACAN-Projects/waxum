@@ -389,7 +389,7 @@ pub(super) fn get_event_type(event: &wacore::types::events::Event) -> String {
 /// Build the metadata blob a downstream consumer needs to call
 /// /sessions/:id/media/download for an inbound media message. Returns null
 /// for non-media or text-only messages.
-pub(super) fn extract_media_metadata(msg: &waproto::whatsapp::Message) -> serde_json::Value {
+pub(crate) fn extract_media_metadata(msg: &waproto::whatsapp::Message) -> serde_json::Value {
     let msg = msg.get_base_message();
     use base64::Engine as _;
     fn b64(b: &[u8]) -> String {

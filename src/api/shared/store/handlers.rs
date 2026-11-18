@@ -120,6 +120,28 @@ pub async fn message(
     Ok(Json(row.as_ref().map(WireMessage::from)))
 }
 
+/// Media keys of a stored message (`direct_path`, `media_key`, hashes,
+/// `file_length`, `mimetype`, ...), the same shape as `data.media` in the
+/// `message` webhook, so a consumer can `POST /media/download` a message it
+/// learned about only later -- e.g. one that arrived through history sync
+/// before the session was linked. `null` when the message is unknown or
+/// carries no media.
+pub async fn message_media(
+    State(state): State<AppState>,
+    Path((session_id, jid, id)): Path<(String, String, String)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let row = store(&state, &session_id)?
+        .message(&parse(&jid)?, &id)
+        .await
+        .map_err(internal)?;
+    let media = row
+        .as_ref()
+        .and_then(|m| m.message.as_deref())
+        .map(crate::api::shared::sessions::handlers::extract_media_metadata)
+        .unwrap_or(serde_json::Value::Null);
+    Ok(Json(media))
+}
+
 pub async fn reactions(
     State(state): State<AppState>,
     Path((session_id, jid, id)): Path<(String, String, String)>,

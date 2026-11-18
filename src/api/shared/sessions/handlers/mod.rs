@@ -10,6 +10,7 @@
 mod connection;
 mod crud;
 mod events;
+pub(crate) use events::extract_media_metadata;
 mod lifecycle;
 mod transfer;
 
