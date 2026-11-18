@@ -19,6 +19,46 @@ use crate::state::AppState;
 
 use super::*;
 
+/// `PRESENCE_POLICY=manual` keeps the client from announcing `available` on
+/// its own (connect, push-name sync). A linked device that is "online"
+/// silences push notifications on the user's phone, so gateways that sit
+/// on someone's personal account need this. Default: automatic, like
+/// WhatsApp Web.
+pub(crate) fn presence_policy() -> whatsapp_rust::PresencePolicy {
+    presence_policy_from(std::env::var("PRESENCE_POLICY").ok().as_deref())
+}
+
+fn presence_policy_from(raw: Option<&str>) -> whatsapp_rust::PresencePolicy {
+    match raw.map(|v| v.trim().to_ascii_lowercase()) {
+        Some(v) if v == "manual" => whatsapp_rust::PresencePolicy::Manual,
+        _ => whatsapp_rust::PresencePolicy::Automatic,
+    }
+}
+
+#[cfg(test)]
+mod presence_policy_tests {
+    use super::presence_policy_from;
+    use whatsapp_rust::PresencePolicy;
+
+    #[test]
+    fn manual_only_when_asked() {
+        assert_eq!(presence_policy_from(Some("manual")), PresencePolicy::Manual);
+        assert_eq!(
+            presence_policy_from(Some(" MANUAL ")),
+            PresencePolicy::Manual
+        );
+        assert_eq!(presence_policy_from(None), PresencePolicy::Automatic);
+        assert_eq!(
+            presence_policy_from(Some("automatic")),
+            PresencePolicy::Automatic
+        );
+        assert_eq!(
+            presence_policy_from(Some("bogus")),
+            PresencePolicy::Automatic
+        );
+    }
+}
+
 #[utoipa::path(
     get,
     path = "/api/v1/sessions/{session_id}/qr",
@@ -785,6 +825,7 @@ pub(super) async fn connect_client(
         .with_transport_factory(transport_factory)
         .with_http_client(http_client)
         .with_runtime(TokioRuntime)
+        .with_presence_policy(presence_policy())
         .with_device_props({
             let mut o = wacore::store::DevicePropsOverride::new()
                 .with_os(dp.os)
@@ -891,6 +932,7 @@ pub(super) async fn connect_client_with_pair_code(
         .with_transport_factory(transport_factory)
         .with_http_client(http_client)
         .with_runtime(TokioRuntime)
+        .with_presence_policy(presence_policy())
         .with_pair_code(pair_options)
         .with_device_props({
             let mut o = wacore::store::DevicePropsOverride::new()
