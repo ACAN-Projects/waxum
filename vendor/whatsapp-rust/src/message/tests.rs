@@ -5444,30 +5444,31 @@ async fn undecryptable_receive_branch_announces_the_dispatch_it_performs() {
     crate::test_utils::wait_for_outbound_tasks(&client).await;
 }
 
-/// Status posts must flow through PDO — excluding them drops any
-/// InvalidPreKeyId status permanently (WA Web recovers them).
+/// ACAN: every PDO pops "sync with WhatsApp on Windows completed" on the
+/// phone, so status posts and groups (which fail to decrypt all day and the
+/// gateway's users never need) are skipped without reaching the transport.
 #[tokio::test]
-async fn test_pdo_armed_for_status_broadcast() {
-    let client = create_test_client_for_retry_with_id("pdo_status").await;
+async fn test_pdo_skipped_for_status_and_groups() {
+    let client = create_test_client_for_retry_with_id("pdo_status_group").await;
 
-    let info = Arc::new(create_test_message_info(
-        "status@broadcast",
-        "STATUS_MSG_1",
-        "5511777776666@s.whatsapp.net",
-    ));
+    for (chat, id) in [
+        ("status@broadcast", "STATUS_MSG_1"),
+        ("120363000000000001@g.us", "GROUP_MSG_1"),
+    ] {
+        let info = Arc::new(create_test_message_info(
+            chat,
+            id,
+            "5511777776666@s.whatsapp.net",
+        ));
 
-    assert_eq!(info.source.chat.server, wacore_binary::Server::Broadcast);
-
-    // `run_pdo_request` is fully awaited, so its return value is the outcome:
-    // `false` means the request was built and the (offline) send failed, while a
-    // skipped request returns `true` without ever reaching the transport.
-    assert!(
-        !client.run_pdo_request(&info).await,
-        "status@broadcast must arm a PDO request, not skip it",
-    );
+        assert!(
+            client.run_pdo_request(&info).await,
+            "{chat} must skip the PDO request",
+        );
+    }
 }
 
-/// Broadcast lists share the same code path; locks the guard for both.
+/// Broadcast lists (not status) still ask the phone.
 #[tokio::test]
 async fn test_pdo_armed_for_any_broadcast_chat() {
     let client = create_test_client_for_retry_with_id("pdo_bcast_list").await;

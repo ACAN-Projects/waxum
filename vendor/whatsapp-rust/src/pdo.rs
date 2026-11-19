@@ -1887,6 +1887,18 @@ impl Client {
             );
             return true;
         }
+        // ACAN: every PDO makes the phone show "sync with WhatsApp on Windows
+        // completed". Group and status messages fail to decrypt all day and the
+        // gateway's users never need them, so don't ask the phone for those.
+        let chat = &info.source.chat;
+        if chat.is_group() || chat.is_status_broadcast() {
+            debug!(
+                "PDO request skipped for message {} in {} (group/status)",
+                info.id,
+                chat.observe(),
+            );
+            return true;
+        }
         match self.send_pdo_placeholder_resend_request(info).await {
             Ok(()) => true,
             Err(e) => {
